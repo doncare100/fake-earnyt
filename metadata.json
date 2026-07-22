@@ -1,0 +1,6 @@
+{
+  "name": "earnyt",
+  "description": "Get paid for watching videos, completing deals, and earning rewards with real-time IP and VPN protection.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
