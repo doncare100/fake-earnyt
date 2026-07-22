@@ -18,7 +18,7 @@ interface IPCheckResponse {
 
 const app = express();
 app.use(express.json());
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // In-memory data store for live app session
 let mockUsers = [
@@ -79,7 +79,7 @@ async function resolveIPInfo(req: express.Request): Promise<IPCheckResponse> {
     : (req.socket.remoteAddress || '127.0.0.1');
 
   if (rawIp === '::1' || rawIp === '127.0.0.1' || rawIp.startsWith('10.') || rawIp.startsWith('172.16.') || rawIp.startsWith('192.168.')) {
-    // Return empty ip indicator so client-side direct geolocation can kick in if server is local container
+    // Return US IP flagged as VPN per specification
     return {
       ip: '127.0.0.1',
       country: 'United States',
@@ -87,9 +87,9 @@ async function resolveIPInfo(req: express.Request): Promise<IPCheckResponse> {
       city: 'Local',
       region: 'Local',
       isp: 'Local Connection',
-      isVpn: false,
-      isProxy: false,
-      status: 'ALLOWED',
+      isVpn: true,
+      isProxy: true,
+      status: 'VPN_NOT_SUPPORTED',
       checkedAt
     };
   }
@@ -101,12 +101,12 @@ async function resolveIPInfo(req: express.Request): Promise<IPCheckResponse> {
       const data = await response.json();
       if (data.status === 'success') {
         const countryCode = data.countryCode || 'US';
-        const isVpn = Boolean(data.proxy || data.hosting);
+        const isVpn = countryCode === 'US' ? true : Boolean(data.proxy);
         
         let status: 'ALLOWED' | 'REGION_NOT_SUPPORTED' | 'VPN_NOT_SUPPORTED' = 'ALLOWED';
         if (countryCode !== 'US') {
           status = 'REGION_NOT_SUPPORTED';
-        } else if (isVpn) {
+        } else {
           status = 'VPN_NOT_SUPPORTED';
         }
 
@@ -135,9 +135,9 @@ async function resolveIPInfo(req: express.Request): Promise<IPCheckResponse> {
     city: 'Unknown',
     region: 'Unknown',
     isp: 'ISP',
-    isVpn: false,
-    isProxy: false,
-    status: 'ALLOWED',
+    isVpn: true,
+    isProxy: true,
+    status: 'VPN_NOT_SUPPORTED',
     checkedAt
   };
 }
